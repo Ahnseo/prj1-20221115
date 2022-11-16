@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.study.mapper.member.MemberMapper">
+	<select id="selectMemberByNickName" resultType="com.study.domain.member.MemberDto">
+		SELECT 
+			id, password, name, nickname, email, inserted
+		FROM 
+			Member 
+		WHERE 
+			nickname = #{nickname}	
+	</select>
+
+	<select id="selectMemberByEmail" resultType="com.study.domain.member.MemberDto">
+		SELECT 
+			id, password, name, nickname, email, inserted
+		FROM 
+			Member 
+		WHERE 
+			email = #{email}	
+	</select>
+	
+	<insert id="insertMember">
+	
+		INSERT INTO Member (id, password, name, nickname, email)
+		VALUES(#{id}, #{password}, #{name}, #{nickname}, #{email})
+	
+	</insert>
+	
+	<select id="selectMemberList" resultType="com.study.domain.member.MemberDto">
+	SELECT 
+		id, '숨김' password, name, nickname, email, inserted
+	FROM 
+		Member
+	ORDER BY id;
+	</select>
+	
+	<select id="selectMemberInfoById" resultType="com.study.domain.member.MemberDto">
+	SELECT 
+		id, password, name, nickname, email, inserted
+	FROM 
+		Member
+	WHERE id = #{id};
+	</select>
+	
+	<update id="updateMemberInfo">
+	UPDATE Member
+	SET password = #{password},
+		nickname = #{nickname},
+		email =#{email}
+	WHERE id = #{id}	
+	</update>
+	
+	
+	<delete id="deleteMemberById">
+	DELETE FROM Member
+	WHERE id = #{id}
+	</delete>
+
+</mapper>

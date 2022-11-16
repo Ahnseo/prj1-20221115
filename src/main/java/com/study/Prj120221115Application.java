@@ -8,6 +8,8 @@ public class Prj120221115Application {
 
 	public static void main(String[] args) {
 		SpringApplication.run(Prj120221115Application.class, args);
+		
+		
 	}
 
 }

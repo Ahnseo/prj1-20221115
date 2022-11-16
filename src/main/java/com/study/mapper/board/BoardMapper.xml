@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.study.mapper.board.BoardMapper">
+
+	<!-- boardId 의 전체 파일 업데이트 --> 
+	
+	<delete id="deleteFileByBoardIdAndFileName">
+		DELETE FROM Files
+		WHERE boardId = #{boardId} AND name = #{fileName}
+	</delete>
+	
+	<update id="updateFile">
+	UPDATE Files
+	SET 
+		boardId = #{boardId},
+		name = #{fileName}
+	WHERE 
+		boardId = #{boardId}	
+	</update>
+
+	<delete id="deleteFilesByBoardId">
+		DELETE FROM Files
+		WHERE boardId = #{id}	
+	</delete>
+	
+	<insert id="insertFile" >
+		INSERT INTO Files (boardId, name)
+		VALUES(#{boardId}, #{fileName})
+	</insert>
+
+	<insert id="insertBoard" keyProperty="id" useGeneratedKeys="true">
+		INSERT INTO Board 
+			(  title,    content,    writer )
+		VALUES
+			(#{title}, #{content}, #{writer})
+	</insert>
+	
+	<select id="list" resultType="com.study.domain.board.BoardDto">
+		SELECT 
+			b.id,
+			b.title,
+			b.writer,
+			b.inserted,
+			COUNT( DISTINCT r.id) countReply,
+			COUNT( DISTINCT f.id) countFiles
+		FROM Board b
+		
+		LEFT JOIN Reply r
+		ON b.id = r.boardId
+		
+		LEFT JOIN Files f
+		ON b.id = f.boardId	
+				
+		WHERE 
+			<trim prefixOverrides="OR">
+				<if test="type == 'all' or type == 'title'">
+					OR b.title LIKE #{keyword} 		
+				</if>
+				<if test="type=='all' or type=='content'">
+					OR b.content LIKE #{keyword}
+				</if>
+				<if test="type=='all' or type=='writer'">
+					OR b.writer LIKE #{keyword}	
+				</if>
+			</trim>
+		GROUP BY b.id
+		ORDER BY b.id DESC	
+		LIMIT #{offset}, #{records}
+	</select>	
+	
+	<select id="selectBoardById" resultMap="boardMap" >
+		SELECT 
+			b.id,
+			b.title,
+			b.writer,
+			b.content,
+			b.inserted,
+			f.id fileId,
+			f.name AS fileName
+		FROM 
+			Board b LEFT JOIN Files f ON b.id = f.boardId				
+		WHERE 
+			b.id = #{id}
+	</select>
+	<resultMap type="com.study.domain.board.BoardDto" id="boardMap">
+		<id column="id" property="id"/>
+		<result column="title" property="title"/>
+		<result column="writer" property="writer"/>
+		<result column="content" property="content"/>
+		<result column="inserted" property="inserted"/>
+		<collection property="fileName" ofType="String" >
+			<result column="fileName" property="fileName"/>
+		</collection>
+	
+	</resultMap>
+	
+	<update id="update">
+		UPDATE Board
+		SET
+			title   = #{title},
+			content = #{content},
+			writer  = #{writer}
+		WHERE
+			id = #{id} 	
+	</update>
+	
+	<delete id="remove">
+	DELETE FROM 
+			Board
+		WHERE 
+			id =${id}
+		</delete>
+		
+		<select id="countAll" resultType="int">
+		SELECT 
+			Count(*)
+		FROM
+			Board	
+		WHERE 
+		<trim prefixOverrides="OR">
+			<if test="type == 'all' or type == 'title'">
+				OR title LIKE #{keyword} 		
+			</if>
+			<if test="type=='all' or type=='content'">
+				OR content LIKE #{keyword}
+			</if>
+			<if test="type=='all' or type=='writer'">
+				OR writer LIKE #{keyword}	
+			</if>
+		</trim>
+	</select>
+	
+</mapper>
+
+
+
+
+
+
