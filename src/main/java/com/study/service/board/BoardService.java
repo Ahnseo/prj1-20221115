@@ -1,6 +1,9 @@
 package com.study.service.board;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -10,8 +13,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.study.domain.board.BoardDto;
 import com.study.domain.board.PageInfo;
+import com.study.domain.board.ViewDto;
 import com.study.mapper.board.BoardMapper;
 import com.study.mapper.board.ReplyMapper;
+import com.study.mapper.board.ViewMapper;
 
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -28,6 +33,9 @@ public class BoardService {
 	
 	@Autowired
 	private ReplyMapper replyMapper;
+	
+	@Autowired
+	private ViewMapper viewMapper;
 	
 	@Autowired
 	private S3Client s3Client;
@@ -128,6 +136,8 @@ public class BoardService {
 		
 		return boardMapper.selectBoardById(id);
 	}
+	
+	
 	
 	/** 수정된 정보를 최신화 시키기. forward => modify.jsp */
 	public void modify(int id, Model model) {
@@ -241,6 +251,57 @@ public class BoardService {
 			throw new RuntimeException(e);
 		}
 	}
+
+
+
+	public Map<String, Object> updateLike(String boardId, String memberId) {
+		// boardId 와 username 으로 BoardLike테이블을 검색해서  있으면? delete , 없으면? insert
+		int cnt = boardMapper.getLikeByBoardIdAndMemerId(boardId, memberId);
+		
+		Map<String, Object> map = new HashMap<>();
+		if(cnt == 1) { //존재하면 ? 지우고, 새로 저장하기 .
+			map.put("current", "not liked");
+			boardMapper.deleteLike(boardId, memberId);
+		}else {
+			map.put("current", "liked");
+			boardMapper.insertLike(boardId, memberId);
+		}
+		
+		int countAll = boardMapper.countLikeByBoardId(boardId);
+		map.put("count", countAll);
+		
+		return map;
+	}
+
+
+	public Map<String, Object>  addCountViewByBoardId(int id) { 
+		///board/get?id= 으로 인해. 페이지를 가져온다면	,조회수 1씩 증가 
+		Map<String, Object> map = new HashMap<>();
+		BoardDto board = boardMapper.selectBoardById(id);
+		
+		int count = 0;
+		
+		ViewDto view = viewMapper.selectViewDtoByBoardId(id);//존재하는 게시물의 뷰 카운트 가져와서 
+		if(view == null) {
+			//First insert
+			viewMapper.insertViewTableById(id, count); // count == 0 을 넣어 첫 저장   ( boardId, 0 )  	
+		}
+		if(view != null && board != null ) {
+			// 저장된 조회수를 가져오기 
+			count = view.getCountView();
+						
+			//update
+			count += 1; // 조회하면, 1 증가 -> update
+			viewMapper.updateViewByBoardId(id, count);								
+			
+		}
+		System.out.println(count );
+		map.put("countView", count); // jsp ->java script-> fetch  json/ajax 사용하려고.
+			
+		return map;
+	}
+
+
 	
 	
 }

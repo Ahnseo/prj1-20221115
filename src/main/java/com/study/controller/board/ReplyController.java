@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,7 +29,13 @@ public class ReplyController {
 	
 	@PostMapping("add")
 	@ResponseBody
-	public Map<String, Object> add (@RequestBody ReplyDto reply) {
+	@PreAuthorize("isAuthenticated()")//어노테이션 로그인 권
+	public Map<String, Object> add (@RequestBody ReplyDto reply, Authentication authentication) {
+		
+//		if(authentication != null) {
+		reply.setWriter(authentication.getName() ); //로그인한 아이디가 댓글에 대한 권한을 갖음. 위의 @preAuthorize("isAuthenticated()")적용
+//		}
+		
 		Map<String, Object> map = new HashMap<>();
 		int cnt = service.addReply(reply);
 		if (cnt == 1) {
@@ -41,9 +49,14 @@ public class ReplyController {
 	
 	@GetMapping("list/{boardId}")
 	@ResponseBody
-	public List<ReplyDto> list(@PathVariable int boardId){
+	public List<ReplyDto> list(@PathVariable int boardId, Authentication authentication){
 		
-		return service.listReplyByBoardId(boardId);
+		String username = "";
+		if(username != null) { //로그인 아이디와 같다면, 실행 
+			username = authentication.getName();
+		}
+		System.out.println("username : " + username);
+		return service.listReplyByBoardId(boardId, username);
 	}
 	
 	@DeleteMapping("remove/{id}")
@@ -72,7 +85,11 @@ public class ReplyController {
 	
 	@PutMapping("modify")
 	@ResponseBody
+	@PreAuthorize("@replySecurity.checkWriter(authentication.name, #reply.id)")
 	public Map<String, Object> modifyReply(@RequestBody ReplyDto reply ){
+		
+		
+		
 		Map<String, Object> map = new HashMap<>();
 		int cnt = service.modifyReply(reply);
 		

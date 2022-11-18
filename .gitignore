@@ -33,3 +33,10 @@ build/
 .vscode/
 src/main/java/com/study/config/CustomConfig.java
 src/main/resources/custom.properties
+src/main/resources/application.properties
+src/main/resources/application.properties
+src/main/resources/application.properties
+src/main/resources/application.properties
+src/main/resources/application.properties
+*.properties
+src/main/resources/application.properties

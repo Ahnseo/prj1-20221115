@@ -33,12 +33,20 @@
 						</div>
 					</div>
 					<br>
+					
+					<%-- hidden 패스워드 --%>
+					<div class="row">					
+						<div class="col-sm-3 ">	
+							<input type="hidden" value="${member.password }" id="hiddenOldPassword" data-old-hidden="${member.password }">
+							<div id="pwConfirmtext1"></div>
+						</div>
+					</div>
 					<div class="row">
 						<div class="col-sm-2 ">
 							<label class="form-label">비밀번호 변경</label>
 						</div>
 						<div class="col-sm-3 ">	
-							<input type="text" name="password" value="${member.password }" class="form-control" id="currentPassword" data-old-value="${member.password }">
+							<input type="password" name="password" value="" class="form-control" id="currentPassword" data-old-value="${member.password }">
 							<div id="pwConfirmtext1"></div>
 						</div>
 					</div>
@@ -48,7 +56,7 @@
 							<label class="form-label">비밀번호 확인</label>					
 						</div>
 						<div class="col-sm-3 ">
-							<input type="text" class="form-control" id="pwConfirmInput">
+							<input type="password" class="form-control" id="pwConfirmInput">
 							<div id="pwConfirmtext2"></div>
 						</div>
 					</div>
@@ -94,7 +102,8 @@
 						</div>
 					</div>	
 					<br>
-					<input type="hidden" value="${member.password }" readonly id="previousPassword"> <%-- hidden 에 name="" 쿼리스트링 주면 안돼!! 그냥 받아오는것뿐이야. --%>
+					<input type="hidden" value="${member.password }" readonly id="previousPassword"> 
+					<%-- hidden 에 name="" 쿼리스트링 주면 안돼!! 그냥 받아오는것뿐이야. --%>
 					<%-- (수정 다시 물어보기) jsp 모달  --%>
 					<!-- <input type="submit" value="회원정보 수정"> -->
 				</form>
@@ -121,7 +130,7 @@
 	        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 	      </div>
 	      <div class="modal-body">
-	      	<input type="text" class="form-control" id="currentPasswordInRemoveMemberForm" placeholder="탈퇴를 진행하시려면, 비밀번호를 입력하세요.">
+	      	<input class="form-control" id="currentPasswordInRemoveMemberForm" placeholder="탈퇴를 진행하시려면, 비밀번호를 입력하세요.">
 	      	<br>
 	        회원 탈퇴 하시겠습니까?
 	        <div id="failMessage">
@@ -147,7 +156,7 @@
 	      <div class="modal-body">
 	      	
 	      	
-	      	수정한 비밀번호 <input id="pw2" type="text" class="form-control">
+	        <input id="oldPassword1" type="password" class="form-control" value="">
 	      	<br>
 	        수정 하시겠습니까?
 	        <br>
@@ -293,15 +302,18 @@
 	document.querySelector("#updateMemberButton").addEventListener("click", function(){
 		//모달 암포 인풋 입력되 값을 -> 폼 안의 기존암호 인풋에 옴기고 -> 폼을 서브밋
 		const updateMemberForm = document.forms.updateMemberForm;
-		const newPassword = document.querySelector("#currentPassword").value;
+		const oldPassword1 = document.querySelector("#oldPassword1").value;
+		const oldPassword2 = document.querySelector("#hiddenOldPassword").dataset.oldHidden;
 		
 		document.querySelector("#updateMemberModalSubmit").addEventListener("click", function(){
-			const pw2 =	document.querySelector("#pw2").value;
 			
-			if(newPassword == pw2){
+			<%--기존 패스워드와 비교 --%>
+			if(oldPassword2 == oldPassword1){
 				updateMemberForm.submit();						
 			}else{
-				document.querySelector("#modifyModalText").innerText = "변경한 비밀번호를 다시 입력해주세요.";			
+				document.querySelector("#modifyModalText").innerText = "기존의 비밀번호를 다시 입력해주세요.";		
+				console.log(oldPassword1);
+				//console.log(oldPassword2);
 			}	
 		});
 	});

@@ -1,6 +1,7 @@
 package com.study.domain.member;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import lombok.Data;
 
@@ -15,6 +16,9 @@ public class MemberDto {
 	private String name;
 	private String nickname;
 	private String email;
+	
+	
+	private List<String> auth;
 
 	private LocalDateTime inserted;
 	

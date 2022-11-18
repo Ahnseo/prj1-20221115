@@ -44,15 +44,16 @@
 			b.title,
 			b.writer,
 			b.inserted,
-			COUNT( DISTINCT r.id) countReply,
-			COUNT( DISTINCT f.id) countFiles
+			COUNT (DISTINCT r.id) countReply,
+			COUNT (DISTINCT f.id) countFiles,
+			COUNT (DISTINCT l.memberId) countLike,
+			v.countView
 		FROM Board b
 		
-		LEFT JOIN Reply r
-		ON b.id = r.boardId
-		
-		LEFT JOIN Files f
-		ON b.id = f.boardId	
+		LEFT JOIN Reply r ON b.id = r.boardId
+		LEFT JOIN Files f ON b.id = f.boardId	
+		LEFT JOIN BoardLike l ON b.id = l.boardId		
+		LEFT JOIN View v ON b.id = v.boardId
 				
 		WHERE 
 			<trim prefixOverrides="OR">
@@ -79,9 +80,13 @@
 			b.content,
 			b.inserted,
 			f.id fileId,
-			f.name AS fileName
+			f.name fileName,
+			COUNT(l.memberId) countLike,
+			v.countView
 		FROM 
-			Board b LEFT JOIN Files f ON b.id = f.boardId				
+			Board b LEFT JOIN Files f ON b.id = f.boardId
+					LEFT JOIN BoardLike l ON b.id = l.boardId	
+					LEFT JOIN View v ON b.id = v.boardId			
 		WHERE 
 			b.id = #{id}
 	</select>
@@ -91,6 +96,7 @@
 		<result column="writer" property="writer"/>
 		<result column="content" property="content"/>
 		<result column="inserted" property="inserted"/>
+		<result column="countLike" property="countLike"/>
 		<collection property="fileName" ofType="String" >
 			<result column="fileName" property="fileName"/>
 		</collection>
@@ -133,6 +139,38 @@
 		</trim>
 	</select>
 	
+	<select id="getLikeByBoardIdAndMemerId" resultType="int">
+		SELECT 
+			COUNT(*)
+		FROM
+			BoardLike
+		WHERE
+			boardId = #{boardId}
+		AND memberId = #{memberId}			
+	</select>
+	
+	
+	<insert id="insertLike">
+		INSERT INTO BoardLike (boardId, memberId)
+		VALUES (#{boardId}, #{memberId})
+	</insert>
+	
+	<delete id="deleteLike">
+		DELETE FROM BoardLike
+		WHERE boardId = #{boardId}
+		AND   memberId = #{memberId}  	
+	</delete>
+	
+	<select id="countLikeByBoardId" resultType="int">
+		SELECT
+			COUNT(*) 
+		FROM 
+			BoardLike
+		WHERE
+			boardId = #{boardId}		
+	</select>
+	
+
 </mapper>
 
 

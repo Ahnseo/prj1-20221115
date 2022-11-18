@@ -4,7 +4,12 @@ package com.study.controller.member;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+//import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.study.domain.member.MemberDto;
@@ -22,12 +28,16 @@ import com.study.service.member.MemberService;
 
 
 @Controller
+
 @RequestMapping("member")
 public class MemberController {
 	
 	
 	@Autowired
 	private MemberService memberService;
+	
+	@Autowired
+	private PasswordEncoder passwordEncoder;
 	
 	@GetMapping("signup")
 	public void signup() {
@@ -109,12 +119,14 @@ public class MemberController {
 	
 	
 	@GetMapping("list") //read
+	@PreAuthorize("hasAuthority('admin')")
 	public void memberListGet(Model model) {
 		model.addAttribute("memberList", memberService.memberList());
 
 	}
 	
 	@GetMapping( {"info", "modify"} ) //{"info", "modify"} 둘다 하는일이 같아서.
+	@PreAuthorize("(authentication.name == #id) or hasAuthority ('admin')") //본인은 되고 , 남의것은 안되고, 뿐만아니라 admin 까지는 페이지를 열수있게 
 	public void memberInfoById(String id, Model model) {
 		MemberDto memberInfo = memberService.memberInfoById(id);
 		model.addAttribute("member", memberInfo);
@@ -122,27 +134,45 @@ public class MemberController {
 	};
 	
 	@PostMapping("modify")
-	public String modifyMemberInfo( MemberDto member, RedirectAttributes rttr) {
-		int cnt = memberService.modifyMemberInfo(member);
+	@PreAuthorize("authenticaton.name == #member.id") //본인은 되고 , 남의것은 안되
+	public String modifyMemberInfo( MemberDto member, RedirectAttributes rttr, String oldPasseord) {
+		MemberDto oldMember = memberService.memberInfoById(member.getId());
 		rttr.addAttribute("id", member.getId());
 		
-		if(cnt == 1) {
-			rttr.addFlashAttribute("message", "회원정보가 수정되었습니다.");
-			return "redirect:/member/info";
-		}else {
-			rttr.addFlashAttribute("message", "회원정보가 수정되지 않았습니다.");
-			return "redirect:/member/modify";
+		boolean passwordMatch = passwordEncoder.matches(oldPasseord, oldMember.getPassword());
+		if(passwordMatch) {
+			
+			int cnt = memberService.modifyMemberInfo(member);
+			if(cnt == 1) {
+				rttr.addFlashAttribute("message", "회원정보가 수정되었습니다.");
+				return "redirect:/member/info";
+			}
 		}
+		rttr.addFlashAttribute("message", "회원정보가 수정되지 않았습니다.");
+		return "redirect:/member/modify";
+		
 	}
 	
+		
 	@PostMapping("remove")
-	public String removeMemberById(@RequestParam(name="id")String id, RedirectAttributes rttr) {
+	public String removeMemberById(@RequestParam(name="id")String id, RedirectAttributes rttr, HttpServletRequest resquest) throws ServletException {
 		//System.out.println(id);
-		memberService.removeMemberById(id);
 		
-		rttr.addFlashAttribute("message", "회원 탈퇴 되었습니다.");			
+		MemberDto oldMember = memberService.memberInfoById(id);
+		boolean oldMemberMatchPw = passwordEncoder.matches(oldMember.getPassword(), passwordEncoder.encode(oldMember.getPassword()));
+		if(oldMemberMatchPw) {
+			
+			memberService.removeMemberById(id);
+			rttr.addFlashAttribute("message", "회원 탈퇴 되었습니다.");	
+			resquest.logout();
+			return "redirect:/board/list";
+		}else {
+			rttr.addAttribute("id", id);
+			rttr.addFlashAttribute("message", "회원 탈퇴 되지 않았습니다.");	
+			
+			return "redirect:/member/modify";			
+		}
 		
-		return "redirect:/board/list";
 	}
 	
 	@GetMapping("login")

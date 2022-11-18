@@ -26,18 +26,33 @@
 	<div class="container-md">
 	  <div class="row">
 	   <div class="col">
-		<h1>
-			<c:url value="/board/modify" var="modifyLink">
-				<c:param name="id" value="${board.id }"></c:param>
-			</c:url>
-			${board.id }번 게시물 
-			<sec:authorize access="isAuthenticated()">
-				<a class="btn-btn-warning" href="${modifyLink }">수정<i class="fa-solid fa-pen-to-square"></i></a>
-			</sec:authorize>
-		</h1>
+	   		<div class="d-flex">
+				<h1>	
+					<c:url value="/board/modify" var="modifyLink">
+						<c:param name="id" value="${board.id }"></c:param>
+					</c:url>
+					${board.id }번 게시물 
+					<sec:authorize access="isAuthenticated()">
+						<a class="btn-btn-warning" href="${modifyLink }">수정<i class="fa-solid fa-pen-to-square"></i></a>
+					</sec:authorize>
+				</h1>
+				
+				<div class="d-flex flex-row-reverse">
+					<h1 class="p-2">
+						<span id="likeButton"><i class="fa-regular fa-thumbs-up"></i></span>
+						<span id="likeCount">${board.countLike}</span>
+					</h1>
+					<h1 class="p-2"> 
+						<span>조회수 ${view}</span>
+					</h1>
+				</div>
+			</div>
 		<div class="mb-3">
-			<label for="" class="form-label">제목</label>
+			<label for="" class="form-label">
+				제목 
+			</label>
 		</div>
+		
 		
 		<input class="form-control" type="text" name="title" value="${board.title }" readonly> 
 		<div class="mb-3">
@@ -68,29 +83,31 @@
 	   </div>
 	  </div>
 	</div>
-	<div class="container-md">
-	<sec:authorize access="not isAuthenticated()">댓글을 작성하시려면 로그인 해주세요.</sec:authorize>
-	<sec:authorize access="isAuthenticated()">
-		<div id="replyMessage">
-			${message }
-		</div>
 	
+	<div class="container-md">
 		<div class="row">
 			<div class="col">
 				<input type="hidden" id="boardId" value="${board.id }">
-				<input type="text" id="replyInput1" value="">
-				<button id="replySendButton1">댓글쓰기</button>
+				<div id="replyMessage">
+					${message }
+				</div>
+				<sec:authorize access="isAuthenticated()">
+							<input type="text" id="replyInput1" value="">
+							<button id="replySendButton1">댓글쓰기</button>
+				</sec:authorize>
+				<sec:authorize access="not isAuthenticated()">
+					댓글을 작성하시려면 로그인 해주세요.
+				</sec:authorize>
 			</div>
 		</div>
 		
-		<div class="row">
+		<div class="row mt-3">
 			<div class="col">
+				<%--댓글 리스트 --%>
 				<div id="replyListContainer">
-				
 				</div>
 			</div>
-		</div>	
-		</sec:authorize>
+		</div>				
 	</div>
 
 	<!-- 삭제 Modal -->
@@ -138,6 +155,26 @@
 	<script>
 		const contextPath = "${pageContext.request.contextPath}";
 		
+		
+		//좋아요 버튼 클릭시
+		document.querySelector("#likeButton").addEventListener("click", function(){
+			const boardId = document.querySelector("#boardId").value;
+			fetch(contextPath + "/board/like", {
+				method:"put",
+				headers :{"Content-Type":"application/json"},
+				body:JSON.stringify({boardId:boardId})
+				})
+				.then(res => res.json() )
+				.then(data => {
+					document.querySelector("#likeCount").innerText = data.count ;
+					if(data.current == "liked") {
+						document.querySelector("#likeButton").innerHTML = `<i class="fa-solid fa-thumbs-up"></i>`
+					}else {
+						document.querySelector("#likeButton").innerHTML = `<i class="fa-regular fa-thumbs-up"></i>`
+					}
+				})
+			});
+		
 		listReply();
 		
 		// 모달에 기존의 reply content를 읽고, 붙여넣는 기능 만들기
@@ -164,7 +201,8 @@
 		
 		<!-- 댓글 리스트  -->
 		function listReply(){
-			const boardId = document.querySelector("#boardId").value;		
+			const boardId = document.querySelector("#boardId").value;	
+			console.log(boardId);
 			fetch(contextPath + "/reply/list/" + boardId)
 			.then(res => res.json())
 			.then(list => {
@@ -174,11 +212,8 @@
 					//console.log(item.id);
 					const modifyReplyButtonId = `modifyReplyButton\${item.id}`;//각각의 variable id 주기 
 					const removeReplyButtonId = `removeReplyButton\${item.id}`;//각각의 variable id 주기
-					
-					// `` 백틱
-					const replyDiv =
+					const editButton = 
 						`<div>
-							\${item.content} : \${item.inserted}
 							<button
 								data-bs-toggle="modal"
 								data-bs-target="#modifyReplyConfirmModal"
@@ -195,6 +230,14 @@
 							>
 							삭제
 							</button>
+						</div>`;
+						
+					// `` 백틱
+					const replyDiv =
+						`<div>
+							\${item.content} : \${item.inserted}
+							\${item.writer}
+							\${item.editable ? editButton : '' } <%-- ReplyDto editable true? false? 로  댓글 수정 삭제 버튼 불러오기  --%> 
 						</div>`;  
 						
 					<!-- ReplyList 띄우기 -->	
@@ -235,24 +278,29 @@
 			removeReply(this.dataset.replyId);
 		});
 
-		//댓글쓰기
-		document.querySelector("#replySendButton1").addEventListener("click", function(){
+		
+		
+		//댓글쓰기 (if문으로 오류 수정)
+		const replySendButton1 = document.querySelector("#replySendButton1");
+		if(replySendButton1 != null) {
 			
-			
-			const boardId = document.querySelector("#boardId").value;
-			const content = document.querySelector("#replyInput1").value;
-			
-			const data = {boardId, content};
-			
-			fetch(`\${contextPath}/reply/add`, {method : "post", headers : {"Content-Type" : "application/json"}, body : JSON.stringify(data)})
-			.then(res => res.json())
-			.then(data =>{
-				document.querySelector("#replyInput1").value = ""; //댓글input 초기화
-				document.querySelector("#replyMessage").innerText = data.message;			
-			})
-			.then(() => listReply());
-			
-		});
+			replySendButton1.addEventListener("click", function(){
+				
+				
+				const boardId = document.querySelector("#boardId").value;
+				const content = document.querySelector("#replyInput1").value;
+				
+				const data = {boardId, content};
+				
+				fetch(`\${contextPath}/reply/add`, {method : "post", headers : {"Content-Type" : "application/json"}, body : JSON.stringify(data)})
+				.then(res => res.json())
+				.then(data =>{
+					document.querySelector("#replyInput1").value = ""; //댓글input 초기화
+					document.querySelector("#replyMessage").innerText = data.message;			
+				})
+				.then(() => listReply());
+			});
+		}
 	</script>
 </body>
 </html>

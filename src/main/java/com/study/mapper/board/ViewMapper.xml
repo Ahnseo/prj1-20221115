@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.study.mapper.board.ViewMapper">
+	
+	<insert id="insertViewTableById">
+		INSERT INTO View (boardId, countView)
+		VALUES(#{boardId}, #{defaultValue})
+		
+	</insert>
+	
+	<update id="updateViewByBoardId">
+		UPDATE View
+		SET countView = #{countView}
+		WHERE boardId = #{boardId}
+	</update>
+	
+	<select id="selectViewDtoByBoardId" resultType="com.study.domain.board.ViewDto">
+		SELECT 
+			id,
+			boardId,
+			countView
+		FROM 
+			View
+		WHERE 
+			boardId = #{boardId}
+	</select>
+	
+</mapper>

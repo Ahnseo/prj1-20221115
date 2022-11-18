@@ -37,13 +37,24 @@
 	ORDER BY id;
 	</select>
 	
-	<select id="selectMemberInfoById" resultType="com.study.domain.member.MemberDto">
+	<select id="selectMemberInfoById" resultMap="memberMap">
 	SELECT 
-		id, password, name, nickname, email, inserted
+		m.id, m.password, m.name, m.nickname, m.email, m.inserted, a.auth
 	FROM 
-		Member
+		Member m LEFT JOIN Authority a ON m.id = a.memberId
 	WHERE id = #{id};
 	</select>
+	<resultMap type="com.study.domain.member.MemberDto" id="memberMap">
+		<id column="id" property="id"/>
+		<result column="password" property="password"/>
+		<result column="name" property="name"/>
+		<result column="nickname" property="nickname"/>
+		<result column="email" property="email"/>
+		<result column="inserted" property="inserted"/>
+		<collection property="auth" ofType="string">
+			<result column="auth" property="auth"/>
+		</collection>
+	</resultMap>
 	
 	<update id="updateMemberInfo">
 	UPDATE Member
