@@ -34,29 +34,24 @@
 					</div>
 					<br>
 					
-					<%-- hidden 패스워드 --%>
-					<div class="row">					
-						<div class="col-sm-3 ">	
-							<input type="hidden" value="${member.password }" id="hiddenOldPassword" data-old-hidden="${member.password }">
-							<div id="pwConfirmtext1"></div>
-						</div>
-					</div>
+					<input type="checkbox" id="passwordCheckbox"> 비밀번호 변경
+					
 					<div class="row">
 						<div class="col-sm-2 ">
-							<label class="form-label">비밀번호 변경</label>
+							<label class="form-label">새 비밀번호</label>
 						</div>
 						<div class="col-sm-3 ">	
-							<input type="password" name="password" value="" class="form-control" id="currentPassword" data-old-value="${member.password }">
+							<input type="password" name="password" value="" class="form-control" id="currentPassword"  disabled >
 							<div id="pwConfirmtext1"></div>
 						</div>
 					</div>
 					<br>
 					<div class="row">
 						<div class="col-sm-2 ">
-							<label class="form-label">비밀번호 확인</label>					
+							<label class="form-label">새 비밀번호 확인</label>					
 						</div>
 						<div class="col-sm-3 ">
-							<input type="password" class="form-control" id="pwConfirmInput">
+							<input type="password" class="form-control" id="pwConfirmInput" disabled>
 							<div id="pwConfirmtext2"></div>
 						</div>
 					</div>
@@ -102,16 +97,19 @@
 						</div>
 					</div>	
 					<br>
-					<input type="hidden" value="${member.password }" readonly id="previousPassword"> 
-					<%-- hidden 에 name="" 쿼리스트링 주면 안돼!! 그냥 받아오는것뿐이야. --%>
-					<%-- (수정 다시 물어보기) jsp 모달  --%>
-					<!-- <input type="submit" value="회원정보 수정"> -->
+					
+					<%-- hidden 패스워드 hidden 에 name="" 쿼리스트링 주면 안돼!! 그냥 받아오는것뿐이야. --%>
+					<input type="text" name="oldPassword" value="" id ="oldPasswordId" > 
+					
+					<%-- (수정 다시 물어보기) jsp => 모달  --%>
+					<%-- <input type="submit" value="회원정보 수정"> --%>
 				</form>
 				
+				<!-- 회원 탈퇴 form -->
 				<c:url value="/member/remove" var="removeLink"/>
 				<form id="removeMemberForm" action="${removeLink }" method="post" class="mb-3">
 					<input type="hidden" name="id" value="${member.id }">
-					<input type="hidden" id="previousPasswordInRemoveMemberForm" value="${member.password }"><%-- hidden 에 name="" 쿼리스트링 주면 안돼!! 그냥 받아오는것뿐이야. --%>
+					<input type="hidden" id="oldPasswordByRemoveMemberInput" value="${member.password }"><%-- hidden 에 name="" 쿼리스트링 주면 안돼!! 그냥 받아오는것뿐이야. --%>
 					<%-- (탈퇴 다시 물어보기) jsp 모달  --%>
 					<%-- <input type="submit" value="회원 탈퇴"> --%>
 				</form>
@@ -130,7 +128,7 @@
 	        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 	      </div>
 	      <div class="modal-body">
-	      	<input class="form-control" id="currentPasswordInRemoveMemberForm" placeholder="탈퇴를 진행하시려면, 비밀번호를 입력하세요.">
+	      	<input class="form-control" id="oldPasswordByRemoveMemberModalId" name="oldPassword" placeholder="탈퇴를 진행하시려면, 기존 비밀번호를 입력하세요.">
 	      	<br>
 	        회원 탈퇴 하시겠습니까?
 	        <div id="failMessage">
@@ -150,13 +148,11 @@
 	  <div class="modal-dialog">
 	    <div class="modal-content">
 	      <div class="modal-header">
-	        <h1 class="modal-title fs-5" id="exampleModalLabel">회원 정보 수정</h1>
+	        <h1 class="modal-title fs-5" id="exampleModalLabel">기존 암호 입력</h1>
 	        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 	      </div>
 	      <div class="modal-body">
-	      	
-	      	
-	        <input id="oldPassword1" type="password" class="form-control" value="">
+	        <input id="oldPasswordInput1" type="password" class="form-control" value="" >
 	      	<br>
 	        수정 하시겠습니까?
 	        <br>
@@ -170,6 +166,7 @@
 	    </div>
 	  </div>
 	</div>
+	
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous"></script>
 	
 	<script>
@@ -178,10 +175,23 @@
 	const inputPw1 = document.querySelector("#currentPassword");
 	const inputPw2 = document.querySelector("#pwConfirmInput");
 	
-	let availablePw = false;
+	<!-- 회원정보 수정시,비밀번호 수정 체크박스  -->
+	const passwordCheckbox = document.querySelector("#passwordCheckbox");
+	passwordCheckbox.addEventListener("click",function(){
+		if(passwordCheckbox.checked) {
+			
+			inputPw1.removeAttribute("disabled");
+			inputPw2.removeAttribute("disabled");
+		}else {
+			inputPw1.setAttribute("disabled", "");
+			inputPw2.setAttribute("disabled", "");
+		}
+		
+	});
 	
 	
-	<!-- 2차비번이 성공해야, 업뎃가능 -->
+	<!-- 2차비번이 성공해야, 수정 버튼 ON/OFF -->
+	let availablePw = false;	
 	function updateSubmit(){
 		if(availablePw){
 			document.querySelector("#updateMemberButton").removeAttribute("disabled");	
@@ -284,38 +294,47 @@
 	document.querySelector("#removeMemberButton").addEventListener("click", function(){
 		//모달 암포 인풋 입력되 값을 -> 폼 안의 기존암호 인풋에 옴기고 -> 폼을 서브밋
 		const removeMemberForm = document.forms.removeMemberForm;
-		const previousPasswordInRemoveMemberForm = document.querySelector("#previousPasswordInRemoveMemberForm").value;
-		/* console.log(previousPasswordInRemoveMemberForm); 확인 됨*/
+		const oldPasswordByRemoveMemberInput = document.querySelector("#oldPasswordByRemoveMemberInput");
+		console.log(oldPasswordByRemoveMemberInput.value); // 암호화된 기존의 비밀번
+		
+		const oldPasswordByRemoveMemberModalInput = document.querySelector("#oldPasswordByRemoveMemberModalId");
+		console.log(oldPasswordByRemoveMemberModalInput.value);  //너가 문제야. json으로 보낼거야 .
 		
 		document.querySelector("#removeMemberModalSubmit").addEventListener("click", function(){
-			const currentPasswordInRemoveMemberForm = document.querySelector("#currentPasswordInRemoveMemberForm").value;
-			/* console.log(currentPasswordInRemoveMemberForm); 확인 됨*/
-			if (previousPasswordInRemoveMemberForm == currentPasswordInRemoveMemberForm) {
-				document.querySelector("#removeMemberForm").submit();
-			}else{
-				document.querySelector("#failMessage").innerHTML = "비밀번호가 일치하지 않습니다.";
-			}
+			
+			fetch(ctx + "/member/remove", { method:"post", headers:{"Content-Type":"application/json"}, body:JSON.stringify( {oldPassword, oldPasswordByRemoveMemberModalInput.value} ) })	
+			.then(res => res.json())
+			.then(data => { 	
+				
+				console.log(data);
+				
+				if (oldPasswordByRemoveMemberInput == data) {
+					document.querySelector("#removeMemberForm").submit();
+				}else{
+					document.querySelector("#failMessage").innerHTML = "비밀번호가 일치하지 않습니다.";
+				}
+				
+			});
 		});
 	});
 	
 	<!-- 회원 정보 수정 모달 -->
-	document.querySelector("#updateMemberButton").addEventListener("click", function(){
+	document.querySelector("#updateMemberModalSubmit").addEventListener("click", function(){
 		//모달 암포 인풋 입력되 값을 -> 폼 안의 기존암호 인풋에 옴기고 -> 폼을 서브밋
 		const updateMemberForm = document.forms.updateMemberForm;
-		const oldPassword1 = document.querySelector("#oldPassword1").value;
-		const oldPassword2 = document.querySelector("#hiddenOldPassword").dataset.oldHidden;
+		const modalInput1 = document.querySelector("#oldPasswordInput1");
+		const oldPasswordInput = document.querySelector("#oldPasswordId");
 		
-		document.querySelector("#updateMemberModalSubmit").addEventListener("click", function(){
-			
-			<%--기존 패스워드와 비교 --%>
-			if(oldPassword2 == oldPassword1){
-				updateMemberForm.submit();						
-			}else{
-				document.querySelector("#modifyModalText").innerText = "기존의 비밀번호를 다시 입력해주세요.";		
-				console.log(oldPassword1);
-				//console.log(oldPassword2);
-			}	
-		});
+		
+		// 모달 암호 input 입력된 값을 
+		// form 안의 기존암호 input에 옮기고
+		
+		oldPasswordInput.value = modalInput1.value;	
+		
+		console.log(oldPasswordInput);
+		
+		updateMemberForm.submit();
+	
 	});
 	
 	</script>

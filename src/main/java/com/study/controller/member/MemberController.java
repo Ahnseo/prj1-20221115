@@ -20,15 +20,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-//import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.study.domain.member.MemberDto;
 import com.study.service.member.MemberService;
 
-
 @Controller
-
 @RequestMapping("member")
 public class MemberController {
 	
@@ -134,18 +131,22 @@ public class MemberController {
 	};
 	
 	@PostMapping("modify")
-	@PreAuthorize("authenticaton.name == #member.id") //본인은 되고 , 남의것은 안되
-	public String modifyMemberInfo( MemberDto member, RedirectAttributes rttr, String oldPasseord) {
+	@PreAuthorize("authentication.name == #member.id") //본인은 되고 , 남의것은 안되
+	public String modifyMemberInfo( MemberDto member, RedirectAttributes rttr, String oldPassword) {
+		System.out.println(member);
+		
 		MemberDto oldMember = memberService.memberInfoById(member.getId());
 		rttr.addAttribute("id", member.getId());
+		System.out.println("oldPassword : " + oldPassword);
+		System.out.println("oldMember pw : " + oldMember.getPassword());
 		
-		boolean passwordMatch = passwordEncoder.matches(oldPasseord, oldMember.getPassword());
+		boolean passwordMatch = passwordEncoder.matches(oldPassword, oldMember.getPassword());
 		if(passwordMatch) {
 			
 			int cnt = memberService.modifyMemberInfo(member);
 			if(cnt == 1) {
 				rttr.addFlashAttribute("message", "회원정보가 수정되었습니다.");
-				return "redirect:/member/info";
+				return "redirect:/member/" + "info";
 			}
 		}
 		rttr.addFlashAttribute("message", "회원정보가 수정되지 않았습니다.");
@@ -155,11 +156,15 @@ public class MemberController {
 	
 		
 	@PostMapping("remove")
-	public String removeMemberById(@RequestParam(name="id")String id, RedirectAttributes rttr, HttpServletRequest resquest) throws ServletException {
-		//System.out.println(id);
+	@ResponseBody
+	public String removeMemberById( @RequestBody Map <String, Object> oldPassword ,@RequestParam(name="id")String id, RedirectAttributes rttr, HttpServletRequest resquest) throws ServletException {
+		System.out.println(id);
+		
+		System.out.println(oldPassword);
 		
 		MemberDto oldMember = memberService.memberInfoById(id);
-		boolean oldMemberMatchPw = passwordEncoder.matches(oldMember.getPassword(), passwordEncoder.encode(oldMember.getPassword()));
+		boolean oldMemberMatchPw = passwordEncoder.matches(oldPassword, passwordEncoder.encode(oldMember.getPassword()));
+		
 		if(oldMemberMatchPw) {
 			
 			memberService.removeMemberById(id);

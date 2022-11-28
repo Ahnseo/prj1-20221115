@@ -10,7 +10,6 @@ public class MemberDto {
 	
 	//추가 할것.. 성명, 닉네임, 주민번호..?
 	
-	
 	private String id;
 	private String password;
 	private String name;
